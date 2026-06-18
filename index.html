@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Crecimiento | Futura Cliniq</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070711;--bg-card:#0e0e1e;--bg-input:#12122a;
+  --accent:#00d4ff;--accent2:#7c3aed;
+  --grad:linear-gradient(135deg,#00d4ff,#7c3aed);
+  --text:#fff;--muted:#8892b0;--subtle:#3d4466;
+  --border:rgba(255,255,255,0.07);--border-a:rgba(0,212,255,0.25);
+  --green:#00ff88;--gold:#fbbf24;
+  --r:16px;--rs:10px;
+}
+html,body{height:100%;font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+body{min-height:100vh;background:radial-gradient(ellipse at 15% 0%,rgba(124,58,237,.18) 0%,transparent 55%),radial-gradient(ellipse at 85% 100%,rgba(0,212,255,.12) 0%,transparent 55%),var(--bg)}
+
+/* HEADER */
+.hdr{position:fixed;top:0;left:0;right:0;z-index:100;padding:14px 24px;background:rgba(7,7,17,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.hdr-inner{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.hdr-top{display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:17px;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-.5px}
+.step-ctr{font-size:12px;color:var(--muted);font-weight:500}
+.prog{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:var(--grad);border-radius:2px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+/* MAIN */
+.main{padding-top:96px;min-height:100vh;display:flex;align-items:center;justify-content:center;padding-bottom:48px}
+.wrap{width:100%;max-width:620px;padding:0 20px}
+
+/* STEPS */
+.step{display:none;opacity:0;transform:translateX(30px);transition:opacity .28s ease,transform .28s ease}
+.step.active{display:block;opacity:1;transform:translateX(0)}
+
+.tag{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.18);border-radius:100px;font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.6px;text-transform:uppercase;margin-bottom:18px}
+.stitle{font-size:clamp(22px,4vw,34px);font-weight:800;line-height:1.2;letter-spacing:-.5px;margin-bottom:10px}
+.ssub{font-size:15px;color:var(--muted);line-height:1.65;margin-bottom:28px}
+
+/* INPUT */
+.inp-wrap{position:relative;margin-bottom:14px}
+.inp-pre,.inp-suf{position:absolute;top:50%;transform:translateY(-50%);font-size:18px;font-weight:700;color:var(--muted);pointer-events:none}
+.inp-pre{left:18px}.inp-suf{right:16px;font-size:14px}
+.sinput{width:100%;padding:18px 22px;font-size:26px;font-weight:700;font-family:'Inter',sans-serif;color:var(--text);background:var(--bg-input);border:2px solid var(--border);border-radius:var(--r);outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none}
+.sinput:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(0,212,255,.08)}
+.sinput.pre{padding-left:46px}.sinput.suf{padding-right:90px}
+.sinput.dflt{opacity:.55;border-color:rgba(0,212,255,.18)}
+.sinput::placeholder{color:var(--subtle)}
+
+/* BADGE */
+.dbadge{display:none;align-items:center;gap:8px;padding:8px 14px;background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.15);border-radius:8px;font-size:13px;color:var(--accent);margin-bottom:12px}
+.dbadge.on{display:flex}
+
+/* NO LO SÉ */
+.dkbtn{width:100%;padding:13px;background:transparent;border:1px dashed rgba(255,255,255,.12);border-radius:var(--rs);color:var(--muted);font-size:14px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:22px}
+.dkbtn:hover{border-color:rgba(255,255,255,.28);color:var(--text);background:rgba(255,255,255,.02)}
+.dkbtn.on{border-color:rgba(0,212,255,.28);color:var(--accent);background:rgba(0,212,255,.04)}
+
+.hint{font-size:13px;color:var(--subtle);margin-top:-8px;margin-bottom:18px;padding-left:2px;line-height:1.5}
+
+/* STAR SLIDER */
+.star-num{font-size:52px;font-weight:900;color:var(--gold);line-height:1;margin-bottom:10px}
+.srange{width:100%;margin-bottom:8px;accent-color:var(--gold);height:6px}
+.range-labels{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:20px}
+
+/* NAV */
+.nav{display:flex;gap:12px;margin-top:8px}
+.btn-b{flex:0 0 auto;padding:15px 18px;background:transparent;border:1px solid var(--border);border-radius:var(--rs);color:var(--muted);font-size:15px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;transition:all .2s}
+.btn-b:hover{border-color:rgba(255,255,255,.25);color:var(--text)}
+.btn-b:disabled{opacity:.3;cursor:not-allowed}
+.btn-n{flex:1;padding:15px 22px;background:var(--grad);border:none;border-radius:var(--rs);color:#fff;font-size:15px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:opacity .2s,transform .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-n:hover{opacity:.9;transform:translateY(-1px)}.btn-n:active{transform:translateY(0)}
+
+/* ERROR */
+.ferr{font-size:13px;color:#ff6b6b;margin-top:-10px;margin-bottom:14px;padding-left:2px;display:none}
+.ferr.on{display:block}
+
+/* FORM */
+.fg{margin-bottom:14px}
+.flabel{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.finput{width:100%;padding:13px 16px;font-size:15px;font-weight:500;font-family:'Inter',sans-serif;color:var(--text);background:var(--bg-input);border:2px solid var(--border);border-radius:var(--rs);outline:none;transition:border-color .2s}
+.finput:focus{border-color:var(--accent)}.finput::placeholder{color:var(--subtle)}
+
+/* RESULTS */
+.rh{text-align:center;margin-bottom:32px}
+.rh-emoji{font-size:44px;margin-bottom:14px}
+.rtitle{font-size:clamp(20px,4vw,30px);font-weight:800;letter-spacing:-.5px;margin-bottom:10px}
+.rsub{font-size:15px;color:var(--muted)}
+
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px}
+.tcard{padding:22px 18px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);text-align:center}
+.tcard.feat{background:linear-gradient(135deg,rgba(0,212,255,.09),rgba(124,58,237,.09));border-color:rgba(0,212,255,.25);grid-column:span 2}
+.tlabel{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px}
+.tamt{font-size:clamp(28px,5vw,48px);font-weight:900;letter-spacing:-2px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.tper{font-size:12px;color:var(--muted);margin-top:4px}
+
+.mtitle{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:14px}
+.mcard{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--rs);margin-bottom:8px;transition:border-color .2s}
+.mcard:hover{border-color:rgba(0,212,255,.2)}
+.micon{font-size:24px;flex-shrink:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border-radius:10px}
+.minfo{flex:1;min-width:0}
+.mname{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}
+.mdesc{font-size:11px;color:var(--muted);line-height:1.4}
+.mamt{font-size:17px;font-weight:800;color:var(--green);white-space:nowrap}
+.mper{font-size:11px;color:var(--muted);text-align:right}
+
+.dmsg{padding:22px;background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(0,212,255,.05));border:1px solid rgba(124,58,237,.28);border-radius:var(--r);margin:22px 0}
+.dmsg-ico{font-size:26px;margin-bottom:10px}
+.dmsg h3{font-size:17px;font-weight:700;margin-bottom:8px}
+.dmsg p{font-size:13px;color:var(--muted);line-height:1.65}
+
+.cta{padding:30px;background:var(--grad);border-radius:var(--r);text-align:center;margin-top:22px}
+.cta h2{font-size:clamp(18px,3vw,26px);font-weight:800;color:#fff;margin-bottom:8px;letter-spacing:-.3px}
+.cta p{font-size:14px;color:rgba(255,255,255,.82);margin-bottom:18px}
+.cta-a{display:inline-flex;align-items:center;gap:8px;padding:15px 30px;background:#fff;color:#000;font-size:15px;font-weight:800;font-family:'Inter',sans-serif;border:none;border-radius:100px;cursor:pointer;text-decoration:none;transition:transform .2s,box-shadow .2s;letter-spacing:-.2px}
+.cta-a:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+
+.disc{font-size:11px;color:var(--subtle);text-align:center;margin-top:22px;line-height:1.6}
+
+@media(max-width:480px){.tgrid{grid-template-columns:1fr}.tcard.feat{grid-column:span 1}}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.au{animation:fadeUp .4s ease both}
+.au:nth-child(1){animation-delay:.00s}
+.au:nth-child(2){animation-delay:.05s}
+.au:nth-child(3){animation-delay:.10s}
+.au:nth-child(4){animation-delay:.15s}
+.au:nth-child(5){animation-delay:.20s}
+.au:nth-child(6){animation-delay:.25s}
+.au:nth-child(7){animation-delay:.30s}
+.au:nth-child(8){animation-delay:.35s}
+.au:nth-child(9){animation-delay:.40s}
+.au:nth-child(10){animation-delay:.45s}
+.au:nth-child(11){animation-delay:.50s}
+
+/* GHL form container */
+.ghl-card{background:#fff;border-radius:14px;padding:8px;box-shadow:0 10px 40px rgba(0,0,0,.35);overflow:hidden}
+#ghl-iframe{display:block;width:100%}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-inner">
+    <div class="hdr-top">
+      <div class="logo">Futura Cliniq</div>
+      <div class="step-ctr" id="stepCtr">Paso 1 de 11</div>
+    </div>
+    <div class="prog"><div class="prog-fill" id="progFill" style="width:8%"></div></div>
+  </div>
+</div>
+
+<main class="main">
+<div class="wrap">
+
+<!-- PASO 1: Ticket medio -->
+<div class="step active" id="step-1">
+  <div class="tag">💰 Base del cálculo</div>
+  <h1 class="stitle">¿Cuál es tu ticket medio por cita?</h1>
+  <p class="ssub">El importe medio que ingresas por cada visita o tratamiento. Será la base de todos los cálculos.</p>
+  <div class="inp-wrap">
+    <span class="inp-pre">€</span>
+    <input type="number" class="sinput pre" id="i-ticket" placeholder="80" min="0" inputmode="numeric">
+  </div>
+  <p class="hint">Si no lo sabes exactamente, divide tus ingresos del último mes entre el número de citas.</p>
+  <p class="ferr" id="e-ticket">Introduce tu ticket medio para continuar.</p>
+  <div class="nav">
+    <button class="btn-b" disabled>← Atrás</button>
+    <button class="btn-n" onclick="go(1)">Siguiente →</button>
+  </div>
+</div>
+
+<!-- PASO 2: Duración cita -->
+<div class="step" id="step-2">
+  <div class="tag">⏱️ Capacidad de agenda</div>
+  <h1 class="stitle">¿Cuánto dura de media una cita?</h1>
+  <p class="ssub">Tiempo medio desde que entra el paciente hasta que sale, incluyendo preparación y limpieza.</p>
+  <div class="inp-wrap">
+    <input type="number" class="sinput suf" id="i-dur" placeholder="45" min="1" max="300" inputmode="numeric">
+    <span class="inp-suf">minutos</span>
+  </div>
+  <p class="hint">La media en clínicas dentales está entre 30 y 60 minutos.</p>
+  <p class="ferr" id="e-dur">Introduce la duración media de la cita.</p>
+  <div class="nav">
+    <button class="btn-b" onclick="back(2)">← Atrás</button>
+    <button class="btn-n" onclick="go(2)">Siguiente →</button>
+  </div>
+</div>
+
+<!-- PASO 3: Huecos disponibles -->
+<div class="step" id="step-3">
+  <div class="tag">📅 Agenda</div>
+  <h1 class="stitle">¿Cuántos huecos tienes disponibles al día en tu agenda?</h1>
+  <p class="ssub">El total de citas que podrías tener si la agenda estuviera llena al 100%, incluyendo los huecos vacíos.</p>
+  <div class="dbadge" id="b-huecos"><span>ℹ️</span> Usando la media del sector: <strong>&nbsp;15 huecos/día</strong></div>
+  <div class="inp-wrap">
+    <input type="number" class="sinput" id="i-huecos" placeholder="15" min="1" inputmode="numeric">
+  </div>
+  <button class="dkbtn" id="dk-huecos" onclick="toggleDk('huecos',15)">🤷 No lo sé exactamente — usar la media del sector</button>
+  <div class="nav">
+    <button class="btn-b" onclick="back(3)">← Atrás</button>
+    <button class="btn-n" onclick="go(3)">Siguiente →</button>
+  </div>
+</div>
+
+<!-- PASO 4: No-shows -->
+<div class="step" id="step-4">
+  <div class="tag">🚫 No-shows</div>
+  <h1 class="stitle">¿Qué porcentaje de tus citas no se presentan?</h1>
+  <p class="ssub">Pacientes con cita que no aparecen sin avisar. Cada hueco vacío es facturación que no llega.</p>
+  <div class="dbadge" id="b-ns"><span>ℹ️</span> Usando la media del sector: <strong>&nbsp;15% de no-shows</strong></div>
+  <div class="inp-wrap">
+    <input type="number" class="sinput suf" id="i-ns" placeholder="15" min="0" max="100" inputmode="numeric">
+    <span class="inp-suf">%</span>
+  </div>
+  <button class="dkbtn" id="dk-ns" onclick="toggleDk('ns',15)">🤷 No lo sé exactamente — usar la media del sector</button>
+  <div class="nav">
+    <button class="btn-b" onclick="back(4)">← Atrás</button>
+    <button class="btn-n" onclick="go(4)">Siguiente →</button>
+  </div>
+</div>
+
+<!-- PASO 5: Llamadas no atendidas -->
+<div class="step" id="step-5">
+  <div class="tag">📞 Llamadas perdidas</div>
+  <h1 class="stitle">¿Cuántas llamadas no consigues atender al día?</h1>
+  <p class="ssub">Fuera de horario, recepción ocupada, vacaciones… Cada llamada sin respuesta puede ser una cita que se va a la competencia.</p>
+  <div class="dbadge" id="b-ll"><span>ℹ️</span> Usando la media del sector: <strong>&nbsp;6 llamadas no atendidas/día</strong></div>
+  <div class="inp-wrap">
+    <input type="number" class="sinput" id="i-ll" placeholder="6" min="0" inputmode="numeric">
+  </div>
+  <button class="dkbtn" id="dk-ll" onclick="toggleDk('ll',6)">🤷 No lo sé exactamente — usar la media del sector</button>
+  <p class="hint">El 40% de las llamadas a clínicas dentales no se responden (media del sector en España).</p>
+  <div class="nav">
+    <button class="btn-b" onclick="back(5)">← Atrás</button>
+    <button class="btn-n" onclick="go(5)">Siguiente →</button>
+  </div>
+</div>
+
+<!-- PASO 6: Cancelaciones -->
+<div class="step" id="step-6">
+  <div class="tag">❌ Cancelaciones</div>
+  <h1 class="stitle">¿Cuántas cancelaciones al mes no consigues reagendar?</h1>
+  <p class="ssub">Pacientes que cancelan y no vuelves a contactar. Un hueco que se queda vacío sin necesidad.</p>
+  <div class="dbadge" id="b-can"><span>ℹ️</span> Usando la media del sector: <strong>&nbsp;10 cancelaciones sin reagendar/mes</strong></div>
+  <div class="inp-wrap">
+    <input type="number" class="sinput" id="i-can" placeholder="10" min="0" inputmode="numeric">
+  </div>
+  <button class="dkbtn" id="dk-can" onclick="toggleDk('can',10)">🤷 No lo sé exactamente — usar la media del sector</button>
+  <div class="nav">
+    <button class="btn-b" onclick="back(6)">← Atrás</button>
+    <button class="btn-n" onclick="go(6)">Siguiente →</button>
+  </div>
+</div>
+
+<!-- PASO 7: Presupuestos -->
+<div class="step" id="step-7">
+  <div class="tag">📋 Presupuestos</div>
+  <h1 class="stitle">¿Cuántos presupuestos presentas al mes que no se acaban aceptando?</h1>
+  <p class="ssub">Tratamientos que propones pero el paciente no confirma, muchas veces simplemente por falta de un seguimiento posterior.</p>
+  <div class="dbadge" id="b-pre"><span>ℹ️</span> Usando la media del sector: <strong>&nbsp;15 presupuestos sin cerrar/mes</strong></div>
+  <div class="inp-wrap">
+    <input type="number" class="sinput" id="i-pre" placeholder="15" min="0" inputmode="numeric">
+  </div>
+  <button class="dkbtn" id="dk-pre" onclick="toggleDk('pre',15)">🤷 No lo sé exactamente — usar la media del sector</button>
+  <p class="hint">En el sector dental, el 60% de los presupuestos no se cierran por falta de seguimiento.</p>
+  <div class="nav">
+    <button class="btn-b" onclick="back(7)">← Atrás</button>
+    <button class="btn-n" onclick="go(7)">Siguiente →</button>
+  </div>
+</div>
+
+<!-- PASO 8: Pacientes perdidos -->
+<div class="step" id="step-8">
+  <div class="tag">👥 Pacientes inactivos</div>
+  <h1 class="stitle">¿Cuántos pacientes llevan más de 1,5 años sin venir?</h1>
+  <p class="ssub">Pacientes que en su día confiaron en tu clínica y hoy están en manos de la competencia. Son los más fáciles de recuperar porque ya te conocen.</p>
+  <div class="dbadge" id="b-per"><span>ℹ️</span> Usando la media del sector: <strong>&nbsp;120 pacientes inactivos</strong></div>
+  <div class="inp-wrap">
+    <input type="number" class="sinput" id="i-per" placeholder="120" min="0" inputmode="numeric">
+  </div>
+  <button class="dkbtn" id="dk-per" onclick="toggleDk('per',120)">🤷 No lo sé exactamente — usar la media del sector</button>
+  <p class="hint">El 30% de la cartera media de una clínica dental lleva más de 1,5 años sin visita.</p>
+  <div class="nav">
+    <button class="btn-b" onclick="back(8)">← Atrás</button>
+    <button class="btn-n" onclick="go(8)">Siguiente →</button>
+  </div>
+</div>
+
+<!-- PASO 9: Google Maps -->
+<div class="step" id="step-9">
+  <div class="tag">⭐ Reputación online</div>
+  <h1 class="stitle">¿Cuál es tu valoración actual en Google Maps?</h1>
+  <p class="ssub">Es lo primero que ven tus futuros pacientes cuando te buscan. Una nota más alta se traduce directamente en más llamadas y más citas.</p>
+  <div class="dbadge" id="b-goo"><span>ℹ️</span> Usando la media del sector: <strong>&nbsp;3,9 estrellas</strong></div>
+  <div class="star-num" id="starDisp">3.9 ⭐</div>
+  <input type="range" class="srange" id="i-goo" min="1" max="5" step="0.1" value="3.9" oninput="onStar(this.value)">
+  <div class="range-labels"><span>1.0 ⭐</span><span>5.0 ⭐</span></div>
+  <button class="dkbtn" id="dk-goo" onclick="toggleDk('goo',3.9)">🤷 No lo sé exactamente — usar la media del sector</button>
+  <p class="hint">Busca el nombre de tu clínica en Google para ver tu nota actual.</p>
+  <div class="nav">
+    <button class="btn-b" onclick="back(9)">← Atrás</button>
+    <button class="btn-n" onclick="go(9)">Siguiente →</button>
+  </div>
+</div>
+
+<!-- PASO 10: Horas muertas -->
+<div class="step" id="step-10">
+  <div class="tag">⏰ Horas muertas</div>
+  <h1 class="stitle">¿Cuántas horas muertas tiene tu clínica al día?</h1>
+  <p class="ssub">Tiempo de sillón sin paciente por cancelaciones, no-shows o huecos sin cubrir. Tiempo que se evapora si nadie lo gestiona.</p>
+  <div class="dbadge" id="b-hor"><span>ℹ️</span> Usando la media del sector: <strong>&nbsp;2 horas muertas/día</strong></div>
+  <div class="inp-wrap">
+    <input type="number" class="sinput suf" id="i-hor" placeholder="2" min="0" max="12" step="0.5" inputmode="decimal">
+    <span class="inp-suf">horas</span>
+  </div>
+  <button class="dkbtn" id="dk-hor" onclick="toggleDk('hor',2)">🤷 No lo sé exactamente — usar la media del sector</button>
+  <div class="nav">
+    <button class="btn-b" onclick="back(10)">← Atrás</button>
+    <button class="btn-n" onclick="go(10)">Siguiente →</button>
+  </div>
+</div>
+
+<!-- PASO 11: Formulario GHL -->
+<div class="step" id="step-11">
+  <div class="tag">🔒 Último paso</div>
+  <h1 class="stitle">¿Dónde te enviamos tu diagnóstico?</h1>
+  <p class="ssub">Tu diagnóstico personalizado ya está listo. Déjanos tus datos y al enviar verás al instante cuánto puede crecer tu clínica.</p>
+  <div class="ghl-card">
+    <iframe
+      src="https://api.leadconnectorhq.com/widget/form/naHHnfqw9sAMBtmhbxdi"
+      id="ghl-iframe"
+      data-layout="{'id':'INLINE'}"
+      data-form-id="naHHnfqw9sAMBtmhbxdi"
+      title="App Calculadora Cliniq"
+      style="width:100%;border:none;border-radius:12px;min-height:460px">
+    </iframe>
+  </div>
+  <p style="font-size:12px;color:var(--subtle);margin:14px 0 0;line-height:1.5;text-align:center">Al enviar aceptas que el equipo de Futura Cliniq se ponga en contacto contigo. Sin spam, prometido.</p>
+  <div class="nav" style="margin-top:18px">
+    <button class="btn-b" onclick="back(11)">← Atrás</button>
+  </div>
+</div>
+
+<!-- PASO 12: Resultados -->
+<div class="step" id="step-12"></div>
+
+</div>
+</main>
+
+<script>
+var cur = 1;
+var step11ShownAt = 0; // momento en que se mostró el paso del formulario (para el listener de GHL)
+var d = { ticket:null, dur:null, huecos:null, ns:null, ll:null, can:null, pre:null, per:null, goo:3.9, hor:null };
+var def = { huecos:15, ns:15, ll:6, can:10, pre:15, per:120, goo:3.9, hor:2 };
+var usd = {};
+
+function updProg() {
+  var pct = Math.round((cur / 12) * 100);
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('stepCtr').textContent = cur <= 11 ? ('Paso ' + cur + ' de 11') : 'Diagnóstico listo ✓';
+}
+
+function showStep(n, fwd) {
+  // Hide EVERY step first — no dependence on timers, so two steps can never overlap.
+  var steps = document.querySelectorAll('.step');
+  for (var i = 0; i < steps.length; i++) {
+    steps[i].classList.remove('active');
+    steps[i].style.display = 'none';
+    steps[i].style.opacity = '';
+    steps[i].style.transform = '';
+    steps[i].style.transition = '';
+  }
+  // Show only the target step.
+  var next = document.getElementById('step-' + n);
+  if (!next) return;
+  next.style.display = 'block';
+  next.classList.add('active');
+  // Slide-in animation.
+  next.style.transition = 'none';
+  next.style.opacity = '0';
+  next.style.transform = fwd ? 'translateX(28px)' : 'translateX(-28px)';
+  next.offsetHeight;
+  next.style.transition = 'opacity .28s ease, transform .28s ease';
+  requestAnimationFrame(function() {
+    next.style.opacity = '1';
+    next.style.transform = 'translateX(0)';
+  });
+  cur = n;
+  if (n === 11) step11ShownAt = Date.now(); // arma el listener de envío de GHL
+  updProg();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Focus first relevant input (skip on results step).
+  if (n <= 11) {
+    setTimeout(function() {
+      var inp = next.querySelector('input[type="number"]:not(:disabled), input[type="text"], input[type="email"], input[type="tel"]');
+      if (inp) inp.focus();
+    }, 320);
+  }
+}
+
+function getNum(id) { var el = document.getElementById('i-' + id); if (!el) return null; return parseFloat(el.value) || null; }
+
+function go(from) {
+  if (from === 1) {
+    var v = getNum('ticket');
+    if (!v || v <= 0) { show('e-ticket'); return; } hide('e-ticket'); d.ticket = v;
+  }
+  if (from === 2) {
+    var v = getNum('dur');
+    if (!v || v <= 0) { show('e-dur'); return; } hide('e-dur'); d.dur = v;
+  }
+  if (from === 3)  d.huecos = usd.huecos ? def.huecos : (getNum('huecos') || def.huecos);
+  if (from === 4)  d.ns     = usd.ns    ? def.ns    : (getNum('ns')    || def.ns);
+  if (from === 5)  d.ll     = usd.ll    ? def.ll    : (getNum('ll')    || def.ll);
+  if (from === 6)  d.can    = usd.can   ? def.can   : (getNum('can')   || def.can);
+  if (from === 7)  d.pre    = usd.pre   ? def.pre   : (getNum('pre')   || def.pre);
+  if (from === 8)  d.per    = usd.per   ? def.per   : (getNum('per')   || def.per);
+  if (from === 9)  d.goo    = usd.goo   ? def.goo   : (parseFloat(document.getElementById('i-goo').value) || def.goo);
+  if (from === 10) d.hor    = usd.hor   ? def.hor   : (getNum('hor')   || def.hor);
+  // Al llegar al paso del formulario, guardamos los datos para recuperarlos tras el envío de GHL.
+  if (from === 10) { try { localStorage.setItem('cliniq_calc', JSON.stringify(d)); } catch (e) {} }
+  showStep(from + 1, true);
+}
+
+function back(from) { if (from > 1) showStep(from - 1, false); }
+
+function show(id) { document.getElementById(id).classList.add('on'); }
+function hide(id) { document.getElementById(id).classList.remove('on'); }
+
+function toggleDk(key, dv) {
+  var inp = document.getElementById('i-' + key);
+  var btn = document.getElementById('dk-' + key);
+  var bdg = document.getElementById('b-' + key);
+  if (usd[key]) {
+    usd[key] = false;
+    if (inp) { inp.value = ''; inp.disabled = false; inp.classList.remove('dflt'); }
+    btn.classList.remove('on');
+    btn.textContent = '🤷 No lo sé exactamente — usar la media del sector';
+    if (bdg) bdg.classList.remove('on');
+    if (inp) inp.focus();
+  } else {
+    usd[key] = true;
+    if (inp) { inp.value = dv; inp.disabled = true; inp.classList.add('dflt'); }
+    btn.classList.add('on');
+    btn.textContent = '✏️ Introducir mi dato real';
+    if (bdg) bdg.classList.add('on');
+  }
+}
+
+function onStar(v) {
+  document.getElementById('starDisp').textContent = parseFloat(v).toFixed(1) + ' ⭐';
+  if (usd.goo) {
+    usd.goo = false;
+    var btn = document.getElementById('dk-goo');
+    var bdg = document.getElementById('b-goo');
+    btn.classList.remove('on'); btn.textContent = '🤷 No lo sé exactamente — usar la media del sector';
+    if (bdg) bdg.classList.remove('on');
+  }
+}
+
+// Muestra el diagnóstico (usado tanto por el listener de GHL como por el retorno con #resultado).
+function showDiagnosis() {
+  if (cur === 12) return;       // ya está mostrado
+  if (!d || !d.ticket) return;  // sin datos no hay nada que mostrar
+  try { renderResults(''); } catch (e) {}
+  showStep(12, true);
+}
+
+// MÉTODO PRINCIPAL: detectar el envío del formulario de GHL vía postMessage.
+// El iframe de GHL avisa al enviar con "set-sticky-contacts" (guarda el contacto)
+// o "modify-parent-url" (intento de redirect). Al detectarlo, mostramos los resultados
+// con los datos que YA están en memoria — sin recargar y sin depender del redirect.
+// Funciona en móvil, que es donde el redirect de GHL se quedaba pillado.
+window.addEventListener('message', function(e) {
+  if (('' + e.origin).indexOf('leadconnectorhq.com') === -1) return;
+  if (!Array.isArray(e.data)) return;
+  var action = e.data[0];
+  if (action !== 'set-sticky-contacts' && action !== 'modify-parent-url') return;
+  // Solo si el usuario está en el paso del formulario y ha pasado un margen desde que se mostró
+  // (evita cualquier falso positivo al cargar el iframe).
+  if (cur !== 11) return;
+  if (Date.now() - step11ShownAt < 1200) return;
+  showDiagnosis();
+});
+
+// MÉTODO DE RESPALDO: si GHL llega a recargar la página con #resultado, recuperamos
+// los datos guardados en localStorage y mostramos el diagnóstico directamente.
+function checkResultReturn() {
+  var isReturn = location.hash.indexOf('resultado') !== -1 || location.search.indexOf('resultado') !== -1;
+  if (!isReturn) return false;
+  var saved = null;
+  try { saved = JSON.parse(localStorage.getItem('cliniq_calc')); } catch (e) {}
+  if (!saved || !saved.ticket) return false;
+  d = saved;
+  renderResults('');
+  // Mostramos resultados al instante, sin animación de entrada.
+  var steps = document.querySelectorAll('.step');
+  for (var i = 0; i < steps.length; i++) { steps[i].classList.remove('active'); steps[i].style.display = 'none'; }
+  var r12 = document.getElementById('step-12');
+  r12.style.display = 'block';
+  r12.classList.add('active');
+  cur = 12;
+  updProg();
+  return true;
+}
+
+// === Parámetros de mejora (todos ajustables desde aquí) ===
+var CFG = {
+  diasMes:               22,    // días laborables al mes
+  noShowReduccion:       0.30,  // reducimos un 30% de los no-shows
+  llamadasNuevoPaciente: 0.20,  // % de llamadas perdidas que son paciente NUEVO buscando en Google que se va a la competencia (perdido para siempre)
+  cancelacionesReagenda: 0.80,  // reagendamos el 80% de las cancelaciones
+  presupuestosRecupera:  0.20,  // cerramos un 20% más de presupuestos con seguimiento
+  presupuestoMultiplic:  3,     // un presupuesto medio = ticket × 3
+  pacientesReactiva:     0.10,  // reactivamos el 10% de los pacientes inactivos
+  googleNuevosMes:       2,     // +2 pacientes nuevos al mes por mejor reputación
+  horasMuertasRelleno:   0.15   // rellenamos el 15% del tiempo de sillón muerto (conservador, evita doble conteo con no-shows/cancelaciones)
+};
+
+function calc() {
+  var t  = d.ticket;
+  var dh = d.dur / 60;
+  var C  = CFG;
+  var ns   = Math.round(d.huecos * (d.ns/100) * C.noShowReduccion * C.diasMes * t);
+  var ll   = Math.round(d.ll * C.diasMes * C.llamadasNuevoPaciente * t);
+  var can  = Math.round(d.can * C.cancelacionesReagenda * t);
+  var pre  = Math.round(d.pre * C.presupuestosRecupera * (t * C.presupuestoMultiplic));
+  var per  = Math.round((d.per * C.pacientesReactiva * t) / 12);
+  var goo  = Math.round(C.googleNuevosMes * t);
+  var hor  = Math.round((d.hor / dh) * C.horasMuertasRelleno * t * C.diasMes);
+  var mon  = ns + ll + can + pre + per + goo + hor;
+  var ann  = mon * 12;
+  return { ns, ll, can, pre, per, goo, hor, mon, ann };
+}
+
+function eur(n) {
+  return new Intl.NumberFormat('es-ES',{ style:'currency', currency:'EUR', maximumFractionDigits:0 }).format(n);
+}
+
+function counter(el, target, ms) {
+  // Si la pestaña no está visible, requestAnimationFrame se pausa: mostramos el valor final directamente.
+  if (document.hidden) { el.textContent = eur(target); return; }
+  var start = performance.now();
+  (function tick(now) {
+    var p = Math.min((now - start) / ms, 1);
+    var e = 1 - Math.pow(1-p, 3);
+    el.textContent = eur(Math.round(e * target));
+    if (p < 1) requestAnimationFrame(tick);
+  })(start);
+  // Garantía: aseguramos el valor final aunque la animación se interrumpa o se ralentice.
+  setTimeout(function() { el.textContent = eur(target); }, ms + 300);
+}
+
+function renderResults(nom) {
+  var r = calc();
+  var firstName = nom ? nom.split(' ')[0] : '';
+  var metrics = [
+    { ico:'🚫', name:'Reducción de no-shows',       desc:'Reducimos un 30% las citas perdidas por ausencia',               amt:r.ns  },
+    { ico:'📞', name:'Pacientes nuevos por llamada',  desc:'Captamos a quien te busca en Google y llama a la primera clínica que responde',    amt:r.ll  },
+    { ico:'❌', name:'Cancelaciones reagendadas',    desc:'Recuperamos el 80% de las cancelaciones automáticamente',       amt:r.can },
+    { ico:'📋', name:'Presupuestos recuperados',     desc:'Seguimiento automático que cierra un 20% más de presupuestos',  amt:r.pre },
+    { ico:'👥', name:'Pacientes reactivados',        desc:'Recuperamos el 10% de tus pacientes inactivos',                 amt:r.per },
+    { ico:'⭐', name:'Nuevos pacientes por reputación', desc:'Mejoramos tu nota en Google y atraemos +2 pacientes/mes',    amt:r.goo },
+    { ico:'⏰', name:'Horas muertas optimizadas',   desc:'Rellenamos el 15% de tu tiempo de sillón vacío con citas',      amt:r.hor },
+  ];
+
+  document.getElementById('step-12').innerHTML =
+    '<div class="rh au">' +
+      '<div class="rh-emoji">🎯</div>' +
+      '<h1 class="rtitle">' + (firstName ? firstName + ', aquí está' : 'Aquí está') + ' tu diagnóstico</h1>' +
+      '<p class="rsub">Esto es lo que tu clínica podría facturar de más cada mes con Futura Cliniq</p>' +
+    '</div>' +
+
+    '<div class="tgrid au">' +
+      '<div class="tcard">' +
+        '<div class="tlabel">Extra al mes</div>' +
+        '<div class="tamt" id="cnt-mon">' + eur(0) + '</div>' +
+        '<div class="tper">facturación adicional mensual</div>' +
+      '</div>' +
+      '<div class="tcard feat">' +
+        '<div class="tlabel">🚀 Potencial anual</div>' +
+        '<div class="tamt" id="cnt-ann">' + eur(0) + '</div>' +
+        '<div class="tper">facturación adicional en 12 meses</div>' +
+      '</div>' +
+    '</div>' +
+
+    '<p class="mtitle au">Desglose por área de mejora</p>' +
+
+    metrics.map(function(m) {
+      return '<div class="mcard au">' +
+        '<div class="micon">' + m.ico + '</div>' +
+        '<div class="minfo"><div class="mname">' + m.name + '</div><div class="mdesc">' + m.desc + '</div></div>' +
+        '<div><div class="mamt">+' + eur(m.amt) + '</div><div class="mper">al mes</div></div>' +
+      '</div>';
+    }).join('') +
+
+    '<div class="dmsg au">' +
+      '<div class="dmsg-ico">📊</div>' +
+      '<h3>Quien controla sus datos, escala su negocio</h3>' +
+      '<p>Con Futura Cliniq tendrás <strong>todos estos datos en tiempo real</strong>: sabrás exactamente cuántas llamadas no se atienden, cuántos presupuestos se pierden y cuántos pacientes están inactivos. Hoy has tenido que estimarlo. Con nuestro sistema lo controlarás al detalle y podrás tomar decisiones para seguir creciendo.</p>' +
+    '</div>' +
+
+    '<div class="cta au">' +
+      '<h2>Empieza a facturar más en 30 días</h2>' +
+      '<p>Implementamos Futura Cliniq en tu clínica en aproximadamente 1 mes, sin cambiar tu software actual y sin complicaciones.</p>' +
+      '<a href="https://pre.futuradigital.es" target="_blank" class="cta-a">Quiero conocer Futura Cliniq →</a>' +
+    '</div>' +
+
+    '<p class="disc au">*Las estimaciones se basan en medias del sector dental español y en los resultados obtenidos por Futura Cliniq.<br>Los resultados reales pueden variar según el tamaño y características de cada clínica.</p>';
+
+  setTimeout(function() {
+    counter(document.getElementById('cnt-mon'), r.mon, 1600);
+    setTimeout(function() { counter(document.getElementById('cnt-ann'), r.ann, 1900); }, 150);
+  }, 400);
+}
+
+// Si volvemos del formulario de GHL (#resultado), mostramos el diagnóstico directamente.
+// Si no, arrancamos la calculadora en el paso 1.
+if (!checkResultReturn()) { updProg(); }
+</script>
+<script src="https://link.msgsndr.com/js/form_embed.js"></script>
+</body>
+</html>
